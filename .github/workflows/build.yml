@@ -1,0 +1,30 @@
+name: Production build
+on:
+  push:
+    branches: [main]
+  pull_request:
+permissions:
+  contents: read
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm ci --no-audit --no-fund
+      - run: npm run build
+        env:
+          NEXT_TELEMETRY_DISABLED: '1'
+      - run: npm run typecheck
+      - name: Smoke test production server
+        run: |
+          npm start > /tmp/keyamsports-server.log 2>&1 &
+          trap 'kill $! || true' EXIT
+          for attempt in {1..30}; do
+            if curl -fsS http://localhost:3000/ > /tmp/keyamsports-home.html; then break; fi
+            sleep 1
+          done
+          node scripts/smoke-test.mjs

@@ -12,7 +12,7 @@ export default function Home() {
   async function runAgent() {
     setLoading(true)
     try {
-      const res = await fetch('/api/run-agent')
+      const res = await fetch('/api/run-agent', { method: 'POST' })
       const json = await res.json()
       if (json.ok) setAiText(json.text || 'No output')
       else setAiText('Agent error: ' + json.error)
